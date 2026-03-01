@@ -13,6 +13,11 @@ public class playerScript : MonoBehaviour
 
     private bool isFacingRight = true;
 
+    // --- NEW: Attack Variables ---
+    public GameObject attackHitbox;   // You will drag your new hitbox object here
+    public float attackDuration = 0.2f; // How long the hitbox stays active
+    private float attackTimer = 0f;     // A timer to count down the attack
+
     void Start()
     {
         if (rb == null) rb = GetComponent<Rigidbody2D>();
@@ -20,11 +25,37 @@ public class playerScript : MonoBehaviour
         
         groundLayerMask = LayerMask.GetMask("Ground"); 
         animator.SetBool("isJump", false);
+
+        // Make sure the hitbox is turned off when the game starts!
+        if (attackHitbox != null)
+        {
+            attackHitbox.SetActive(false);
+        }
     }
 
     void Update()
     {
+        // --- NEW: ATTACK INPUT ---
+        // Only allow attacking if 'J' is pressed AND we aren't already attacking
+        if (Input.GetKeyDown(KeyCode.J) && attackTimer <= 0)
+        {
+            Attack();
+        }
+
+        // --- NEW: ATTACK TIMER ---
+        // If the timer is running, count it down. When it hits 0, turn off the hitbox.
+        if (attackTimer > 0)
+        {
+            attackTimer -= Time.deltaTime;
+            if (attackTimer <= 0 && attackHitbox != null)
+            {
+                attackHitbox.SetActive(false);
+            }
+        }
+
+
         bool isGrounded = groundCheck.IsTouchingLayers(groundLayerMask);
+        animator.SetBool("isGrounded", isGrounded);
         if (isGrounded) {
             animator.SetBool("isJump", false);
         }
@@ -43,6 +74,13 @@ public class playerScript : MonoBehaviour
         float moveInput = Input.GetAxisRaw("Horizontal");
         rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
         
+        if (moveInput != 0)
+        {
+            animator.SetBool("isRunning", true);
+        }else{
+            animator.SetBool("isRunning", false);
+        }
+
         if (moveInput > 0 && !isFacingRight)
         {
             Flip();
@@ -51,6 +89,23 @@ public class playerScript : MonoBehaviour
         {
             Flip();
         }
+    }
+
+    // --- NEW: Attack Logic ---
+    private void Attack()
+    {
+        // Turn on the invisible collision box
+        if (attackHitbox != null)
+        {
+            attackHitbox.SetActive(true);
+        }
+        
+        // Start the countdown timer
+        attackTimer = attackDuration;
+        
+        // Trigger the attack animation in the Animator
+        // (Make sure to add a "Trigger" parameter named "Attack" in your Animator!)
+        animator.SetTrigger("Attack"); 
     }
 
     private void Flip()
