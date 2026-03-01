@@ -6,9 +6,11 @@ public class playerScript : MonoBehaviour
     public float jumpForce = 5f;
     public Rigidbody2D rb;
     public CircleCollider2D groundCheck;
-    public float jumpCut = 0.5f; 
+    public float jumpCut = 0.5f;
 
     private int groundLayerMask;
+    private int resetLayerMask;
+    private Vector3 spawnPosition;
     [SerializeField] private Animator animator;
 
     private bool isFacingRight = true;
@@ -21,9 +23,9 @@ public class playerScript : MonoBehaviour
     void Start()
     {
         if (rb == null) rb = GetComponent<Rigidbody2D>();
-        rb.freezeRotation = true; 
-        
-        groundLayerMask = LayerMask.GetMask("Ground"); 
+        rb.freezeRotation = true;
+
+        groundLayerMask = LayerMask.GetMask("Ground");
         animator.SetBool("isJump", false);
 
         // Make sure the hitbox is turned off when the game starts!
@@ -31,6 +33,8 @@ public class playerScript : MonoBehaviour
         {
             attackHitbox.SetActive(false);
         }
+        resetLayerMask = LayerMask.GetMask("Reset");
+        spawnPosition = transform.position;
     }
 
     void Update()
@@ -56,7 +60,8 @@ public class playerScript : MonoBehaviour
 
         bool isGrounded = groundCheck.IsTouchingLayers(groundLayerMask);
         animator.SetBool("isGrounded", isGrounded);
-        if (isGrounded) {
+        if (isGrounded)
+        {
             animator.SetBool("isJump", false);
         }
 
@@ -73,11 +78,13 @@ public class playerScript : MonoBehaviour
 
         float moveInput = Input.GetAxisRaw("Horizontal");
         rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
-        
+
         if (moveInput != 0)
         {
             animator.SetBool("isRunning", true);
-        }else{
+        }
+        else
+        {
             animator.SetBool("isRunning", false);
         }
 
@@ -99,21 +106,34 @@ public class playerScript : MonoBehaviour
         {
             attackHitbox.SetActive(true);
         }
-        
+
         // Start the countdown timer
         attackTimer = attackDuration;
-        
+
         // Trigger the attack animation in the Animator
         // (Make sure to add a "Trigger" parameter named "Attack" in your Animator!)
-        animator.SetTrigger("Attack"); 
+        animator.SetTrigger("Attack");
     }
 
     private void Flip()
     {
         isFacingRight = !isFacingRight;
-        
+
         Vector3 localScale = transform.localScale;
         localScale.x *= -1f;
         transform.localScale = localScale;
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (((1 << other.gameObject.layer) & resetLayerMask) != 0)
+        {
+            Respawn();
+        }
+    }
+    private void Respawn()
+    {
+        rb.linearVelocity = Vector2.zero;
+        transform.position = spawnPosition;
     }
 }
