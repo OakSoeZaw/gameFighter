@@ -12,6 +12,7 @@ public class playerScript : MonoBehaviour
     private int resetLayerMask;
     private Vector3 spawnPosition;
     [SerializeField] private Animator animator;
+    private AudioSource attackSound;
 
     private bool isFacingRight = true;
 
@@ -35,6 +36,7 @@ public class playerScript : MonoBehaviour
         }
         resetLayerMask = LayerMask.GetMask("Reset");
         spawnPosition = transform.position;
+        attackSound = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -107,12 +109,17 @@ public class playerScript : MonoBehaviour
             attackHitbox.SetActive(true);
         }
 
+
         // Start the countdown timer
         attackTimer = attackDuration;
 
         // Trigger the attack animation in the Animator
         // (Make sure to add a "Trigger" parameter named "Attack" in your Animator!)
         animator.SetTrigger("Attack");
+        if (attackSound != null)
+        {
+            attackSound.Play();
+        }
     }
 
     private void Flip()
